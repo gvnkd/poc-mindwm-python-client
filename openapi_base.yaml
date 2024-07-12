@@ -1,0 +1,115 @@
+openapi: 3.1.0
+paths: {}
+info:
+  title: Mindwm API
+  description: API defining the operations available in the Mindwm API
+  version: 0.1.0
+servers:
+  - url: "https://mindwmw.io/v1"
+    description: Production API endpoint for the Mindwm API
+
+components:
+  schemas:
+    CloudEvent:
+      properties:
+        subject:
+          type: string
+
+    IoDocument:
+      allOf:
+        - $ref: '#/components/schemas/CloudEvent'
+        - properties:
+            type:
+              type: string
+              const: IoDocument
+            source:
+              type: string
+              # mindwm.bebebeko.mcmp6.tmux.L3RtcC90bXV4LTkyOTYwMDAwNS9kZWZhdWx0LDE2MzczOTQsMA==.505eec90-266c-11ef-bc96-2fde980ed4b5.0.0.iodocument
+              #              username                           hostname                  tmux   base64_tmux socket path                    UUID                                      TMUX_SESS  PANE_ID  iodocument topic 
+              pattern: '[a-zA-Z0-9_][a-zA-Z0-9_-]{0,31}\\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\\.tmux\\.[A-Za-z0-9+/]*={0,2}\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.[0-9]+?\\.[0-9]+?\\.tiodocument$'
+            data:
+              $ref: '#/components/schemas/TmuxPaneIoDocument'
+      additionalProperties: false
+
+    Clipboard:
+      allOf:
+        - $ref: '#/components/schemas/CloudEvent'
+        - properties:
+            type:
+              type: string
+              const: Clipboard
+            source:
+              type: string
+              # mindwm.bebebeko.mcmp6.tmux.L3RtcC90bXV4LTkyOTYwMDAwNS9kZWZhdWx0LDE2MzczOTQsMA==.505eec90-266c-11ef-bc96-2fde980ed4b5.0.0.iodocument
+              #              username                           hostname                  tmux   base64_tmux socket path                    UUID                                      TMUX_SESS  PANE_ID  iodocument topic 
+              pattern: '[a-zA-Z0-9_][a-zA-Z0-9_-]{0,31}\\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$'
+            data:
+              $ref: '#/components/schemas/ClipboardPayload'
+          additionalProperties: false
+
+
+    ClipboardPayload:
+      type: object
+      properties: 
+        start: 
+          type: array
+          description: "Starting position of clipboard selection [x,y]"
+          items: 
+            type: integer
+          minItems: 2
+          maxItems: 2
+        stop: 
+          type: array
+          description: "Ending position of clipboard selection [x,y]"
+          items: 
+            type: integer
+          minItems: 2
+          maxItems: 2
+        data:
+          type: string
+          description: "Clipboard data"
+          minLength: 1
+        type:
+          type: string
+          description: "Clipboard type"
+          enum: ["primary", "secondary", "clipboard"]
+        context: 
+          type: object
+          description: "Selection context"
+          properties:
+            window:
+              type: string
+              description: "window id"
+      examples: 
+        - data: "clipboard selection data"
+          type: "secondary"
+          start: [86, 120]
+          stop: [321, 420]
+          context:
+            window: 0x8061cdef
+
+    TmuxPaneIoDocument:
+      type: object
+      properties:
+        input:
+          type: string
+          description: User input
+          minLength: 1
+        output:
+          type: string
+          minLength: 0
+          description: Command output (mix of stdout & stderr)
+        ps1: 
+          type: string
+          description: ps1 (prompt) AFTER the input and output
+          minLength: 1
+      additionalProperties: false
+      required:
+        - input
+        - output
+        - ps1
+      examples:
+        - input: uptime
+          output: "16:37:51 up 19 days,  2:15, 71 users,  load average: 2.01, 2.85, 2.95"
+          ps1: "user@mindwm-dev1:~/rnd/asyncapi$"
+
